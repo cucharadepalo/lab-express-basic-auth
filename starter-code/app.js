@@ -3,13 +3,19 @@ const path           = require("path");
 const logger         = require("morgan");
 const cookieParser   = require("cookie-parser");
 const bodyParser     = require("body-parser");
+const expressLayouts = require('express-ejs-layouts');
 const mongoose       = require("mongoose");
+const session        = require("express-session");
+const MongoStore     = require("connect-mongo")(session);
+const auth           = require('./routes/auth');
+const secure         = require('./routes/secure');
 const app            = express();
 
 // Controllers
 
 // Mongoose configuration
-mongoose.connect("mongodb://localhost/basic-auth");
+const databaseName = 'mongodb://localhost/basic-auth';
+mongoose.connect(databaseName, {useMongoClient:true});
 
 // Middlewares configuration
 app.use(logger("dev"));
@@ -25,8 +31,19 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // Authentication
 app.use(cookieParser());
+app.use(session({
+  secret: "basic-auth-secret",
+  cookie: { maxAge: 60000 },
+  store: new MongoStore({
+    mongooseConnection: mongoose.connection,
+    ttl: 24 * 60 * 60 // 1 day
+  })
+}));
 
 // Routes
+app.use('/', auth)
+app.use('/main', secure)
+app.use('private', secure)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
