@@ -42,8 +42,8 @@ app.use(session({
 
 // Routes
 app.use('/', auth)
-app.use('/main', secure)
-app.use('private', secure)
+app.use('/*', secure)
+//app.use('/private', secure)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
